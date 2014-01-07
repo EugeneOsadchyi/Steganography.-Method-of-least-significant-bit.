@@ -20,7 +20,7 @@ namespace Coder.Control
             BitArray message = new BitArray(Encoding.ASCII.GetBytes(obj.message));
 
             {
-                long imageSize = obj.image_Without_Info.Width * obj.image_Without_Info.Height;
+                long imageSize = obj.image_With_Info.Width * obj.image_With_Info.Height;
                 int infoSize = 8 + 40 + message.Length;
 
                 if (imageSize < infoSize)
@@ -75,8 +75,8 @@ namespace Coder.Control
             
 
             //Calculating amount of rows and cols used for information
-            int cals = EncriptedData.Length % obj.image_Without_Info.Width;
-            int rows = EncriptedData.Length / obj.image_Without_Info.Width;
+            int cals = EncriptedData.Length % obj.image_With_Info.Width;
+            int rows = EncriptedData.Length / obj.image_With_Info.Width;
 
             //Inserting information into picture
             i = 0; // Rows
@@ -88,14 +88,14 @@ namespace Coder.Control
                 j = 0;
                 do
                 {
-                    pixel = obj.image_Without_Info.GetPixel(j, i);
+                    pixel = obj.image_With_Info.GetPixel(j, i);
 
                     pixelValue = new BitArray(Encoding.ASCII.GetBytes(pixel.R.ToString()));
 
-                    sb.Append("Pixel " + (obj.image_Without_Info.Width * i + j) + " : " + pixelValue[0] + "\n"); // TO DEBUG
+                    sb.Append("Pixel " + (obj.image_With_Info.Width * i + j) + " : " + pixelValue[0] + "\n"); // TO DEBUG
                     //sb.Append("Pixel cal=" + j + ", row=" + i + " : " + pixelValue[0] + "\n"); // TO DEBUG
 
-                    pixelValue[0] = EncriptedData[obj.image_Without_Info.Width * i + j];
+                    pixelValue[0] = EncriptedData[obj.image_With_Info.Width * i + j];
 
                     j++;
                 } while (j < cals);
@@ -111,5 +111,6 @@ namespace Coder.Control
 
             Console.WriteLine();
         }
+
     }
 }

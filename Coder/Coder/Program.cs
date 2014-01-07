@@ -17,6 +17,8 @@ namespace Coder
 
             Algorithm_Of_Convertation.integrateInformation(ref obj);
 
+            obj.SaveImage("d:\\result.jpg");
+
             Console.WriteLine("Completed");
             Console.ReadLine();
         }
