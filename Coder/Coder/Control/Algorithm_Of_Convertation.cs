@@ -31,6 +31,7 @@ namespace Coder.Control
 
             //Color component length is 8 bits
             BitArray colorComponent = new BitArray(Encoding.ASCII.GetBytes(obj.ColorComponent.ToString()));
+            Console.WriteLine("Color Component: {0}", colorComponent.Length);
 
             //Message length (max value is 40 bits)
             BitArray messageLength = new BitArray(Encoding.ASCII.GetBytes(message.Length.ToString()));

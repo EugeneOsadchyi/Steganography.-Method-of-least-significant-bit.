@@ -12,9 +12,9 @@ namespace Coder
     {
         private Bitmap imageWoInf;
         private Bitmap imageWiInf;
-        public byte ColorComponent { get; set; }
+        public char ColorComponent { get; set; }
 
-        public Data_Image_Message(string path, string msg, byte component)
+        public Data_Image_Message(string path, string msg, char component)
         {
             image_Without_Info = new Bitmap(path);
             message = msg;
