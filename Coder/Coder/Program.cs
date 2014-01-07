@@ -13,7 +13,7 @@ namespace Coder
     {
         static void Main(string[] args)
         {
-            Data_Image_Message obj = new Data_Image_Message("D:\\a.jpg", "Hello World");
+            Data_Image_Message obj = new Data_Image_Message("D:\\Jellyfish.jpg", "Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World ", 3);
 
             Algorithm_Of_Convertation.integrateInformation(ref obj);
 
