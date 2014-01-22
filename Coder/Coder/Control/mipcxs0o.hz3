@@ -1,0 +1,232 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using System.Drawing;
+using System.Collections;
+
+namespace Coder.Control
+{
+    class Algorithm_Of_Convertation
+    {
+        public static Bitmap integrateInformation(ref Data_Image_Message obj)
+        {
+            Color pixel;
+            BitArray pixelValue;
+
+            //Message
+            BitArray message = new BitArray(Encoding.ASCII.GetBytes(obj.message));
+
+            {
+                long imageSize = obj.image_With_Info.Width * obj.image_With_Info.Height;
+                int infoSize = 8 + 40 + message.Length;
+
+                if (imageSize < infoSize)
+                {
+                    throw new Exception("Image is too small");
+                }
+            }
+
+            //Color component length is 8 bits
+            BitArray colorComponent = new BitArray(Encoding.ASCII.GetBytes(obj.ColorComponent.ToString()));
+            Console.WriteLine("Color Component: {0}", colorComponent.Length);
+
+            for (int item = colorComponent.Length - 1; item >= 0; item--)
+            {
+                Console.Write(Convert.ToInt32(colorComponent[item]));
+            }
+
+            //Message length (max value is 40 bits)
+            BitArray messageLength = new BitArray(Encoding.ASCII.GetBytes(message.Length.ToString()));
+
+            for (int item = messageLength.Length - 1; item >= 0; item--)
+            {
+                Console.Write(Convert.ToInt32(messageLength[item]));
+            }
+            Console.WriteLine("Message length is: {0}", message.Length);
+            //Creating array with fixed size
+            BitArray EncriptedData = new BitArray(8 + 40 + message.Length);
+            Console.WriteLine("Array Created");
+
+            //Merging data in one wariable
+
+            int i = 0;
+            int g = 0;
+
+            //Color component
+            while (g < colorComponent.Length)
+            {
+                EncriptedData[g] = colorComponent[g];
+                g++;
+            }
+            Console.WriteLine("Color component merged");
+
+            //Message length
+            g = 8;
+            i = 0;
+            while (i < messageLength.Length)
+            {
+                EncriptedData[g] = messageLength[i];
+                g++; i++;
+            }
+            Console.WriteLine("MessageLength merged");
+
+            //Message
+            g = 40;
+            i = 0;
+            while (i < message.Length)
+            {
+                EncriptedData[g] = message[i];
+                g++; i++;
+            }
+            Console.WriteLine("Message merged");
+
+
+            //Calculating amount of rows and cols used for information
+            int cals = EncriptedData.Length % obj.image_With_Info.Width;
+            int rows = EncriptedData.Length / obj.image_With_Info.Width;
+
+            //Inserting information into picture
+            i = 0; // Rows
+            int j = 0; // Cals
+            StringBuilder sb = new StringBuilder(); // TO debug
+            Console.WriteLine("Inserting information");
+            do
+            {
+                j = 0;
+                do
+                {
+                    pixel = obj.image_With_Info.GetPixel(j, i);
+
+                    pixelValue = new BitArray(Encoding.ASCII.GetBytes(pixel.R.ToString()));
+
+                    sb.Append("Pixel " + (obj.image_With_Info.Width * i + j) + " : " + pixelValue[0] + "\n"); // TO DEBUG
+                    //sb.Append("Pixel cal=" + j + ", row=" + i + " : " + pixelValue[0] + "\n"); // TO DEBUG
+
+                    pixelValue[0] = EncriptedData[obj.image_With_Info.Width * i + j];
+
+                    byte[] new_value = new byte[pixelValue.Length];
+
+                    pixelValue.CopyTo(new_value, 0);
+
+                    obj.image_With_Info.SetPixel(j, i, Color.FromArgb(int.Parse(Encoding.ASCII.GetString(new_value)), pixel.G, pixel.B));
+
+                    j++;
+                } while (j < cals);
+                i++;
+            } while (i < rows);
+
+            System.IO.File.WriteAllText(@"d:\WriteText.txt", sb.ToString()); // TO DEBUG
+
+            //for (int item = message.Length - 1; item >= 0; item--)
+            //{
+            //    Console.Write(Convert.ToInt32(message[item]));
+            //}
+
+            Console.WriteLine();
+            return obj.image_With_Info;
+        }
+
+        public static void getInformation(Bitmap obj)
+        {
+            BitArray pixelValue;
+
+            BitArray colorComponent = new BitArray(8);
+
+            int cals = colorComponent.Length % obj.Width;
+            int rows = colorComponent.Length / obj.Width;
+
+            Console.WriteLine("Cals: {0}, Rows: {1}", cals, rows);
+
+            int i = 0;
+            int j = 0;
+
+            do
+            {
+                j = 0;
+                do
+                {
+                    pixelValue = new BitArray(Encoding.ASCII.GetBytes(obj.GetPixel(j, i).R.ToString()));
+                    colorComponent.Set(obj.Width * i + j, pixelValue[0]);
+                    j++;
+                } while (j < cals);
+                i++;
+            } while (i < rows);
+
+            byte[] colorComponentBytes = new byte[1];
+
+            colorComponent.CopyTo(colorComponentBytes, 0);
+
+
+
+            BitArray messageLength = new BitArray(40);
+
+            cals = (messageLength.Length + 8) % obj.Width;
+            rows = (messageLength.Length + 8) / obj.Width;
+
+
+            Console.WriteLine("Cals: {0}, Rows: {1}", cals, rows);
+
+            i = 0;
+            j = 8;
+
+            do
+            {
+
+                do
+                {
+                    pixelValue = new BitArray(Encoding.ASCII.GetBytes(obj.GetPixel(j, i).R.ToString()));
+                    messageLength.Set(obj.Width * i + j - 8, pixelValue[0]);
+                    j++;
+                } while (j < cals);
+                j = 0;
+                i++;
+            } while (i < rows);
+
+            for (int item = messageLength.Length - 1; item >= 0; item--)
+            {
+                Console.Write(Convert.ToInt32(messageLength[item]));
+            }
+
+            byte[] messageLengthBytes = new byte[5];
+
+            messageLength.CopyTo(messageLengthBytes, 0);
+
+
+            Console.WriteLine("Message length is {0}", Encoding.ASCII.GetString(messageLengthBytes));
+
+            BitArray message = new BitArray(int.Parse(Encoding.ASCII.GetString(messageLengthBytes)));
+
+            cals = message.Length % obj.Width;
+            rows = message.Length / obj.Width;
+
+            Console.WriteLine("Cals: {0}, Rows: {1}", cals, rows);
+
+            i = 0;
+            j = 0;
+
+            do
+            {
+                j = 0;
+                do
+                {
+                    pixelValue = new BitArray(Encoding.ASCII.GetBytes(obj.GetPixel(j, i).R.ToString()));
+                    message.Set(obj.Width * i + j, pixelValue[0]);
+                    j++;
+                } while (j < cals);
+                i++;
+            } while (i < rows);
+
+            byte[] messageBytes = new byte[5];
+
+            message.CopyTo(messageBytes, 0);
+
+
+            Console.WriteLine("Resultive message");
+            Console.WriteLine(Encoding.ASCII.GetString(messageBytes));
+
+        }
+    }
+}
