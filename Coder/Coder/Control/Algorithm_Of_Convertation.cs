@@ -11,98 +11,16 @@ namespace Coder.Control
 {
     class Algorithm_Of_Convertation
     {
-        private static void buildEncryptedDataArray(BitArray data, BitArray EncriptedData, int encDataIterator, int dataIterator)
+
+        //***********************************************************************************************************************************************************//
+        //********************************************************    Main method of inserting informaion    ********************************************************//
+        //***********************************************************************************************************************************************************//
+
+        public static Bitmap encodeInformation(ref Data_Image_Message obj)
         {
-            // Here information about each part of data (color component, messageLength and message) is merging in one array
-
-            //*********************************************************************************//
-            //***** EncriptedData - data array                 encDataIterator - iterator *****//
-            //***** data          - parts of data              dataIterator    - iterator *****//
-            //*********************************************************************************//
-
-            while (dataIterator < data.Length)
-            {
-                EncriptedData[encDataIterator] = data[dataIterator];
-                encDataIterator++;
-                dataIterator++;
-            }
-        }
-        private static void setting(Data_Image_Message obj, BitArray EncriptedData, int i, int j, StringBuilder sb)
-        {
-            // Here generated information is setting into image pixels
-
-            Color pixel;
-            BitArray pixelValue;
-
-            pixel = obj.image_With_Info.GetPixel(j, i);
-
-            pixelValue = new BitArray(Encoding.ASCII.GetBytes(pixel.R.ToString()));
-            
-            pixelValue[0] = EncriptedData[obj.image_With_Info.Width * i + j];
-            
-            //sb.Append("Pixel " + (obj.image_With_Info.Width * i + j) + " : " + pixelValue[0] + "\n"); // Logging TO DEBUG
-
-            byte[] new_value = new byte[pixelValue.Length];
-
-            pixelValue.CopyTo(new_value, 0);
-
-            obj.image_With_Info.SetPixel(j, i, Color.FromArgb(int.Parse(Encoding.ASCII.GetString(new_value)), pixel.G, pixel.B));
-        }
-
-        private static void processInsertingInfo(Data_Image_Message obj, BitArray EncriptedData, StringBuilder sb)
-        {
-            // Here processes the calculatings of used space of picture for the information
-
-            // Calculating amount of rows and cols used for information
-            int cals = EncriptedData.Length % obj.image_With_Info.Width;
-            int rows = EncriptedData.Length / obj.image_With_Info.Width;
-
-            // Inserting information into picture
-            int i = 0; // Rows
-            int j = 0; // Cals
-
-            // Iterating through the picture's pixels and inserting hidden information
-
-            // Full cols (image width)
-            while (i < rows)
-            {
-                j = 0;
-                do
-                {
-                    setting(obj, EncriptedData, i, j, sb);
-                    j++;
-                } while (j < obj.image_With_Info.Width);
-                i++;
-            }
-
-            // Not full col
-            if (i == rows)
-            {
-                j = 0;
-                do
-                {
-                    setting(obj, EncriptedData, rows, j, sb);
-                    j++;
-                } while (j < cals);
-            }
-        }
-        private static void getting(Bitmap obj, ref BitArray pixelValue, int i, int j, BitArray message, int offset, StringBuilder sb)
-        {
-            // Processing getting bits of information from pixels
-
-            pixelValue = new BitArray(Encoding.ASCII.GetBytes(obj.GetPixel(j, i).R.ToString()));
-            message.Set(obj.Width * i + j - offset, pixelValue[0]);
-            sb.Append("Pixel " + (obj.Width * i + j) + " : " + pixelValue[0] + "\n"); // TO DEBUG
-        }
-
-        public static Bitmap integrateInformation(ref Data_Image_Message obj)
-        {
-            // Main method of inserting informaion
-
-
             // Message to Bit Array
             BitArray message = new BitArray(Encoding.ASCII.GetBytes(obj.message));
-            
+
             Console.WriteLine("Message length is: {0}", message.Length);
 
             {
@@ -124,22 +42,22 @@ namespace Coder.Control
             Console.WriteLine("messageLength Length: {0}", messageLength.Length);
 
             //Creating array with fixed size
-            BitArray EncriptedData = new BitArray(8 + 40 + message.Length);
-            Console.WriteLine("Encripted Data Length is {0}", EncriptedData.Length);
+            BitArray encodedData = new BitArray(8 + 40 + message.Length);
+            Console.WriteLine("Encripted Data Length is {0}", encodedData.Length);
             Console.WriteLine("Array Created");
 
             //Merging data in one wariable
 
             //Color component
-            buildEncryptedDataArray(colorComponent, EncriptedData, 0, 0);
+            collectEncodedData(colorComponent, encodedData, 0, 0);
             Console.WriteLine("Color component merged");
 
             //Message length
-            buildEncryptedDataArray(messageLength, EncriptedData, 8, 0);
+            collectEncodedData(messageLength, encodedData, 8, 0);
             Console.WriteLine("MessageLength merged");
 
             //Message
-            buildEncryptedDataArray(message, EncriptedData, 48, 0);
+            collectEncodedData(message, encodedData, 48, 0);
             Console.WriteLine("Message merged");
 
             StringBuilder sb = new StringBuilder(); // TO debug
@@ -147,11 +65,11 @@ namespace Coder.Control
 
 
             // Processing the integration
-            processInsertingInfo(obj, EncriptedData, sb);
+            processIntegrating(obj.image_With_Info, encodedData, sb);
 
 
             Console.WriteLine("Resultive message length (STRING): {0}", obj.message.Length);
-            
+
             //System.IO.File.WriteAllText(@"d:\Encode.txt", sb.ToString()); // TO DEBUG
 
 
@@ -168,18 +86,16 @@ namespace Coder.Control
         }
 
 
-
-
-
-        
-
-        public static void getInformation(Bitmap obj)
+        //***********************************************************************************************************************************************************//
+        //********************************************************    Main method of getting informaion    ********************************************************//
+        //***********************************************************************************************************************************************************//
+        public static void decodeInformation(Bitmap image)
         {
             StringBuilder sb = new StringBuilder();
             BitArray colorComponent = new BitArray(8);
             byte[] colorComponentBytes;
 
-            colorComponentBytes = processGettingData(obj, colorComponent, 0, 0, 0, 1, sb);
+            colorComponentBytes = processDecodding(image, colorComponent, 0, 0, 0, 1, sb);
 
             Console.WriteLine("colorComponent is {0}", Encoding.ASCII.GetString(colorComponentBytes));
 
@@ -187,13 +103,13 @@ namespace Coder.Control
             BitArray messageLength = new BitArray(40);
             byte[] messageLengthBytes;
 
-            messageLengthBytes = processGettingData(obj, messageLength, 0, 8, 8, 5, sb);
+            messageLengthBytes = processDecodding(image, messageLength, 0, 8, 8, 5, sb);
             Console.WriteLine("messageLength is {0}", Encoding.ASCII.GetString(messageLengthBytes));
-            
+
             BitArray message = new BitArray(int.Parse(Encoding.ASCII.GetString(messageLengthBytes)));
             byte[] messageBytes;
 
-            messageBytes = processGettingData(obj, message, 0, 48, 48, (int.Parse(Encoding.ASCII.GetString(messageLengthBytes)) / 8), sb);
+            messageBytes = processDecodding(image, message, 0, 48, 48, (int.Parse(Encoding.ASCII.GetString(messageLengthBytes)) / 8), sb);
 
             Console.WriteLine("Encripted Data Length is {0}", message.Length + messageLength.Length + colorComponent.Length);
 
@@ -203,14 +119,84 @@ namespace Coder.Control
             System.IO.File.WriteAllText(@"d:\Decode.txt", sb.ToString()); // TO DEBUG
         }
 
-        private static byte[] processGettingData(Bitmap obj, BitArray incommingData, int i, int j, int offset, int resultLength, StringBuilder sb)
+
+
+
+        //***********************************************************************************************************************************************************//
+        //******************************    Each part of data (color component, messageLength and message) is merging in one array    *******************************//
+        //***********************************************************************************************************************************************************//
+        private static void collectEncodedData(BitArray data, BitArray encodedData, int encDataIterator, int dataIterator)
+        {
+
+            //*********************************************************************************//
+            //***** EncriptedData - data array                 encDataIterator - iterator *****//
+            //***** data          - parts of data              dataIterator    - iterator *****//
+            //*********************************************************************************//
+
+            while (dataIterator < data.Length)
+            {
+                encodedData[encDataIterator] = data[dataIterator];
+                encDataIterator++;
+                dataIterator++;
+            }
+        }
+
+
+        
+        //***********************************************************************************************************************************************************//
+        //**********************************************    Going througth the picture and setting the information in it    *****************************************//
+        //***********************************************************************************************************************************************************//
+        private static void processIntegrating(Bitmap image, BitArray EncriptedData, StringBuilder sb)
+        {
+            // Here processes the calculatings of used space of picture for the information
+
+            // Calculating amount of rows and cols used for information
+            int cals = EncriptedData.Length % image.Width;
+            int rows = EncriptedData.Length / image.Width;
+
+            // Inserting information into picture
+            int i = 0; // Rows
+            int j = 0; // Cals
+
+            // Iterating through the picture's pixels and inserting hidden information
+
+            // Full cols (image width)
+            while (i < rows)
+            {
+                j = 0;
+                do
+                {
+                    setPixel(image, EncriptedData, i, j, sb);
+                    j++;
+                } while (j < image.Width);
+                i++;
+            }
+
+            // Not full col
+            if (i == rows)
+            {
+                j = 0;
+                do
+                {
+                    setPixel(image, EncriptedData, rows, j, sb);
+                    j++;
+                } while (j < cals);
+            }
+        }
+
+
+
+        //***********************************************************************************************************************************************************//
+        //********************************************    Going througth the picture and getting the information from it    *****************************************//
+        //***********************************************************************************************************************************************************//
+        private static byte[] processDecodding(Bitmap image, BitArray data, int i, int j, int offset, int resultLength, StringBuilder sb)
         {
             BitArray pixelValue = null;
 
             byte[] decodedDataBytes = new byte[resultLength];
 
-            int cals = (incommingData.Length + offset) % obj.Width;
-            int rows = (incommingData.Length + offset) / obj.Width;
+            int cals = (data.Length + offset) % image.Width;
+            int rows = (data.Length + offset) / image.Width;
 
             i = 0;
             j = offset;
@@ -220,26 +206,67 @@ namespace Coder.Control
             {
                 do
                 {
-                    getting(obj, ref pixelValue, i, j, incommingData, offset, sb);
+                    getPixel(image, ref pixelValue, i, j, data, offset, sb);
                     j++;
-                } while (j < obj.Width);
+                } while (j < image.Width);
 
                 j = 0;
                 i++;
             }
             if (i == rows)
             {
-                j =  offset;
+                j = offset;
                 do
                 {
-                    getting(obj, ref pixelValue, rows, j, incommingData, offset, sb);
+                    getPixel(image, ref pixelValue, rows, j, data, offset, sb);
                     j++;
                 } while (j < cals);
             }
-            incommingData.CopyTo(decodedDataBytes, 0);
+
+            data.CopyTo(decodedDataBytes, 0);
             return decodedDataBytes;
         }
 
+
+
+        //***********************************************************************************************************************************************************//
+        //******************************************************************    Setting  pixels    ******************************************************************//
+        //***********************************************************************************************************************************************************//
+        private static void setPixel(Bitmap image, BitArray EncriptedData, int i, int j, StringBuilder sb)
+        {
+            // Here generated information is setting into image pixels
+
+            Color pixel;
+            BitArray pixelValue;
+
+            pixel = image.GetPixel(j, i);
+
+            pixelValue = new BitArray(Encoding.ASCII.GetBytes(pixel.R.ToString()));
+
+            pixelValue[0] = EncriptedData[image.Width * i + j];
+            
+            //sb.Append("Pixel " + (obj.image_With_Info.Width * i + j) + " : " + pixelValue[0] + "\n"); // Logging TO DEBUG
+
+            byte[] new_value = new byte[pixelValue.Length];
+
+            pixelValue.CopyTo(new_value, 0);
+
+            image.SetPixel(j, i, Color.FromArgb(int.Parse(Encoding.ASCII.GetString(new_value)), pixel.G, pixel.B));
+        }
+
+
+        //***********************************************************************************************************************************************************//
+        //******************************************************************    Getting  pixels    ******************************************************************//
+        //***********************************************************************************************************************************************************//
+        private static void getPixel(Bitmap image, ref BitArray pixelValue, int i, int j, BitArray message, int offset, StringBuilder sb)
+        {
+            // Processing getting bits of information from pixels
+
+            pixelValue = new BitArray(Encoding.ASCII.GetBytes(image.GetPixel(j, i).R.ToString()));
+            message.Set(image.Width * i + j - offset, pixelValue[0]);
+
+            // sb.Append("Pixel " + (image.Width * i + j) + " : " + pixelValue[0] + "\n"); // TO DEBUG
+        }
 
     }
 }
